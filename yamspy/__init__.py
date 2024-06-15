@@ -243,6 +243,9 @@ class MSPy:
         'MSP2_CF_SERIAL_CONFIG':              0x1009,
         'MSP2_SET_CF_SERIAL_CONFIG':          0x100A,
 
+        'MSP2_SENSOR_GPS':                    0x1F03,
+        'MSP2_SENSOR_COMPASS':                0x1F04,
+
         'MSPV2_INAV_STATUS':                  0x2000,
         'MSPV2_INAV_OPTICAL_FLOW':            0x2001,
         'MSPV2_INAV_ANALOG':                  0x2002,
@@ -409,6 +412,40 @@ class MSPy:
             'svid':                       [],
             'quality':                    [],
             'cno':                        []
+        }
+        
+        self.SENSOR_GPS_DATA = {
+            'instance': 0,                   # sensor instance number to support multi-sensor setups
+            'gps_week': 0,                   # GPS week, 0xFFFF if not available
+            'ms_tow': 0,
+            'fix_type': 0,
+            'satellites_in_view': 0,
+            'horizontal_pos_accuracy': 0,     # [cm]
+            'vertical_pos_accuracy': 0,       # [cm]
+            'horizontal_vel_accuracy': 0,     # [cm/s]
+            'hdop': 0,
+            'longitude': 0,
+            'latitude': 0,
+            'msl_altitude': 0,        # cm
+            'ned_vel_north': 0,       # cm/s
+            'ned_vel_east': 0,
+            'ned_vel_down': 0,
+            'ground_course': 0,      # deg * 100, 0..36000
+            'true_yaw': 0,           # deg * 100, values of 0..36000 are valid. 65535 = no data available
+            'year': 0,
+            'month': 0,
+            'day': 0,
+            'hour': 0,
+            'min': 0,
+            'sec': 0,
+        }
+        
+        self.SENSOR_COMPASS_DATA = {
+            'instance': 0,
+            'time_ms': 0,
+            'magX': 0,   # mGauss, front
+            'magY': 0,   # mGauss, right
+            'magZ': 0,   # mGauss, down
         }
 
         self.ANALOG = {}
@@ -2239,6 +2276,38 @@ class MSPy:
 
     def process_MSP_SET_CF_SERIAL_CONFIG(self, data):
         logging.info('Serial config saved')
+
+    def process_MSP2_SENSOR_GPS(self, data):
+        self.SENSOR_GPS_DATA['instance'] = self.readbytes(data, size=8, unsigned=True)
+        self.SENSOR_GPS_DATA['gps_week'] = self.readbytes(data, size=16, unsigned=True)
+        self.SENSOR_GPS_DATA['ms_tow'] = self.readbytes(data, size=32, unsigned=True)
+        self.SENSOR_GPS_DATA['fix_type'] = self.readbytes(data, size=8, unsigned=True)
+        self.SENSOR_GPS_DATA['satellites_in_view'] = self.readbytes(data, size=8, unsigned=True)
+        self.SENSOR_GPS_DATA['horizontal_pos_accuracy'] = self.readbytes(data, size=16, unsigned=True)
+        self.SENSOR_GPS_DATA['vertical_pos_accuracy'] = self.readbytes(data, size=16, unsigned=True)
+        self.SENSOR_GPS_DATA['horizontal_vel_accuracy'] = self.readbytes(data, size=16, unsigned=True)
+        self.SENSOR_GPS_DATA['hdop'] = self.readbytes(data, size=16, unsigned=True)
+        self.SENSOR_GPS_DATA['longitude'] = self.readbytes(data, size=32, unsigned=False)
+        self.SENSOR_GPS_DATA['latitude'] = self.readbytes(data, size=32, unsigned=False)
+        self.SENSOR_GPS_DATA['msl_altitude'] = self.readbytes(data, size=32, unsigned=False)
+        self.SENSOR_GPS_DATA['ned_vel_north'] = self.readbytes(data, size=32, unsigned=False)
+        self.SENSOR_GPS_DATA['ned_vel_east'] = self.readbytes(data, size=32, unsigned=False)
+        self.SENSOR_GPS_DATA['ned_vel_down'] = self.readbytes(data, size=32, unsigned=False)
+        self.SENSOR_GPS_DATA['ground_course'] = self.readbytes(data, size=16, unsigned=True)
+        self.SENSOR_GPS_DATA['true_yaw'] = self.readbytes(data, size=16, unsigned=True)
+        self.SENSOR_GPS_DATA['year'] = self.readbytes(data, size=16, unsigned=True)
+        self.SENSOR_GPS_DATA['month'] = self.readbytes(data, size=8, unsigned=True)
+        self.SENSOR_GPS_DATA['day'] = self.readbytes(data, size=8, unsigned=True)
+        self.SENSOR_GPS_DATA['hour'] = self.readbytes(data, size=8, unsigned=True)
+        self.SENSOR_GPS_DATA['min'] = self.readbytes(data, size=8, unsigned=True)
+        self.SENSOR_GPS_DATA['sec'] = self.readbytes(data, size=8, unsigned=True)
+
+    def process_MSP2_SENSOR_COMPASS(self, data):
+        self.SENSOR_COMPASS_DATA['instance'] = self.readbytes(data, size=8, unsigned=True)
+        self.SENSOR_COMPASS_DATA['time_ms'] = self.readbytes(data, size=32, unsigned=True)
+        self.SENSOR_COMPASS_DATA['magX'] = self.readbytes(data, size=16, unsigned=False)
+        self.SENSOR_COMPASS_DATA['magY'] = self.readbytes(data, size=16, unsigned=False)
+        self.SENSOR_COMPASS_DATA['magZ'] = self.readbytes(data, size=16, unsigned=False)
 
     def process_MSP_MODE_RANGES(self, data):
         self.MODE_RANGES = [] # empty the array as new data is coming in
